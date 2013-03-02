@@ -14,6 +14,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 
 	self.init = function() {
 	  console.log("VideoEmbed hello world!");
-	}
+	};
 	
-});
+	return self;
+}(CandyShop.VideoEmbed || {}, Candy, jQuery));
