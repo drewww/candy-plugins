@@ -51,6 +51,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     console.log("found video? " + foundVideo);
     if(!foundVideo) {
       hideEmbed();
+    } else {
+      showEmbed();
     }
 	};
 	
@@ -66,8 +68,23 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     }
 	};
 	
+  // TODO this is a tad weird right now - if there are any notices of videos
+  // in the older messages, it will cause the video embed div to appear. it 
+  // will start minimized and stay minimized, but will have the last mentioned
+  // video embedded there (even if the current topic doesn't have video:)
+  // this isn't optimal, but it's okay for now.
 	var hideEmbed = function() {
-    $(".video-embed").hide();
+    $(".video-embed iframe").hide();
+    
+    // change the close button to an open button.
+    $(".video-embed .close").hide();
+    $(".video-embed .open").show();
+	};
+	
+	var showEmbed = function() {
+    $(".video-embed iframe").show();
+    $(".video-embed .close").show();
+    $(".video-embed .open").hide();
 	};
 	
 	var createOrUpdateEmbed = function(videoId) {
@@ -83,7 +100,16 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    // want to see it.
 	    // TODO see what happens when we turn rooms on
 	    
-      $("#chat-rooms").prepend($('<div class="video-embed"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
+      $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Group Video</h1><div class="close">X</div><div class="open">O</div><br class="clear"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
+      
+      $(".video-embed .close").click(function() {
+        hideEmbed();
+      });
+      
+      $(".video-embed .open").click(function() {
+        showEmbed();
+      });
+      
 	  }
 	  
 	};

@@ -1,10 +1,45 @@
 
 
 .video-embed {
-  height: 300px;
   position: absolute;
   right: 200px;
   z-index: 5;
+  background-color: #333;
+  width: 533px;
+}
+
+.video-embed h1 {
+  float: left;
+  font-size: 14px;
+  color: #ccc;
+  padding: 5px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.video-embed .close, .video-embed .open {
+  float: right;
+  font-weight: bold;
+  background-color: #666;
+  color: white;
+  padding: 5px;
+  padding-top: 10px;
+  cursor: pointer;
+  
+  height: 20px;
+}
+
+.video-embed .close:active, .video-embed .open:active {
+  background-color: #444;
+  
+}
+
+.video-embed .close:hover, .video-embed .open:hover {
+  background-color: #555;
+}
+
+br.clear {
+  clear: both;
 }
 
 .video-embed iframe {
