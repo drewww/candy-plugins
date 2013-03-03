@@ -26,14 +26,13 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  // args is {roomJid, element, subject}
     console.log("subject change: " + args.subject);
     
-    
     var subjectPieces = args.subject.split(" ");
     
     // now loop through the pieces looking for video.
     for(var i=0; i<subjectPieces.length; i++) {
       var piece = subjectPieces[i];
       
-      if(piece.indexOf("video")!=-1) {
+      if(piece.toLowerCase().indexOf("video")!=-1) {
         // if we find it, look at the next piece for the url.
         var videoUrl = subjectPieces[i+1];
         
