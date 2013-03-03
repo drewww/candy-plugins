@@ -50,9 +50,9 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     
     console.log("found video? " + foundVideo);
     if(!foundVideo) {
-      hideEmbed();
+      hideEmbed(true);
     } else {
-      showEmbed();
+      showEmbed(true);
     }
 	};
 	
@@ -68,12 +68,11 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     }
 	};
 	
-  // TODO this is a tad weird right now - if there are any notices of videos
-  // in the older messages, it will cause the video embed div to appear. it 
-  // will start minimized and stay minimized, but will have the last mentioned
-  // video embedded there (even if the current topic doesn't have video:)
-  // this isn't optimal, but it's okay for now.
-	var hideEmbed = function() {
+	var hideEmbed = function(fullHide) {
+	  if(fullHide) {
+	    $(".video-embed").hide();
+	  }
+	  
     $(".video-embed iframe").hide();
     
     // change the close button to an open button.
@@ -81,7 +80,11 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     $(".video-embed .open").show();
 	};
 	
-	var showEmbed = function() {
+	var showEmbed = function(fullShow) {
+	  if(fullShow) {
+	    $(".video-embed").show();
+	  }
+
     $(".video-embed iframe").show();
     $(".video-embed .close").show();
     $(".video-embed .open").hide();
@@ -100,7 +103,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    // want to see it.
 	    // TODO see what happens when we turn rooms on
 	    
-      $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Group Video</h1><div class="close">X</div><div class="open">O</div><br class="clear"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
+      $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Room Video</h1><div class="close"><img src="candy-plugins/video-embed/img/bullet_arrow_up.png"></div><div class="open"><img src="candy-plugins/video-embed/img/bullet_arrow_down.png"></div><br class="clear"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
       
       $(".video-embed .close").click(function() {
         hideEmbed();

@@ -20,7 +20,7 @@
 .video-embed .close, .video-embed .open {
   float: right;
   font-weight: bold;
-  background-color: #666;
+  background-color: #222;
   color: white;
   padding: 5px;
   padding-top: 10px;
@@ -36,6 +36,10 @@
 
 .video-embed .close:hover, .video-embed .open:hover {
   background-color: #555;
+}
+
+.open img, .close img {
+  width: 22px;
 }
 
 br.clear {
