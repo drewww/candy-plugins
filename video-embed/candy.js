@@ -69,7 +69,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    embed = $(".video-embed");
 	    embed.find("iframe").attr("src", "http://www.youtube.com/embed/" + videoId + '?rel=0');
 	  } else {
-      $(".message-pane").prepend($('<div class="video-embed"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
+      $("#chat-rooms").prepend($('<div class="video-embed"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
 	  }
 	  
 	};

@@ -2,5 +2,12 @@
 
 .video-embed {
   height: 300px;
-  background-color: #333;
+  position: absolute;
+  right: 200px;
+  z-index: 5;
+}
+
+.video-embed iframe {
+  margin-left: auto;
+  margin-right: auto;
 }
