@@ -29,6 +29,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     var subjectPieces = args.subject.split(" ");
     
     // now loop through the pieces looking for video.
+    var foundVideo = false;
     for(var i=0; i<subjectPieces.length; i++) {
       var piece = subjectPieces[i];
       
@@ -39,12 +40,17 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         var videoId = extractYoutubeId(videoUrl);
         
         if(!videoId) {
-          // didn't find the id, just break.
-          return;
+          continue;
         } else {
+          foundVideo = true;
           createOrUpdateEmbed(videoId);
         }
       }
+    }
+    
+    console.log("found video? " + foundVideo);
+    if(!foundVideo) {
+      hideEmbed();
     }
 	};
 	
@@ -58,7 +64,11 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
       console.log("Bad youtube url: " + youtubeURL)
       return false;
     }
-	}
+	};
+	
+	var hideEmbed = function() {
+    $(".video-embed").hide();
+	};
 	
 	var createOrUpdateEmbed = function(videoId) {
 	  // check and see if the video embed exists already. if it does, 
@@ -68,6 +78,11 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    embed = $(".video-embed");
 	    embed.find("iframe").attr("src", "http://www.youtube.com/embed/" + videoId + '?rel=0');
 	  } else {
+	    
+	    // TODO make it easy to show/hide the embed for users that don't
+	    // want to see it.
+	    // TODO see what happens when we turn rooms on
+	    
       $("#chat-rooms").prepend($('<div class="video-embed"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
 	  }
 	  
