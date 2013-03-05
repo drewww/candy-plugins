@@ -19,3 +19,8 @@ CandyShop.Videoembed.init();
 ````
 
 Now you'll need to set the topic/subject of the room with the video URL. As far as I know, this requires logging into your jabber server with a third party client that has a UI for jabber administrative features. Most jabber clients should have the ability to set the topic. Change the topic to a string that includes "VIDEO: " followed by a stream URL. For now, this plugin supports only Youtube streaming embeds. Later versions will support more elaborate functionality. 
+
+
+## Draggability
+
+IF you'd like to be able to drag the video embed around, you can include the jQuery UI draggable functionality in your page. The library is available at [http://jqueryui.com/](jqueryui.com). This plugin doesn't require that library, but draggability will be automatically disabled if it's not present.
