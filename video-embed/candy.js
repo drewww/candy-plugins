@@ -145,6 +145,15 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
       $(".video-embed #large").click(function() {
         sizeEmbed("large");
       });
+      
+      // if the jquery draggable behavior seems to exist, make the 
+      // embed draggable.
+      var embedEl = $(".video-embed");
+      
+      if(embedEl.draggable !== undefined) {
+        embedEl.draggable();
+        embedEl.css("cursor", "move");
+      }
 	  }
 	  
 	};
