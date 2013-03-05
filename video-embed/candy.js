@@ -24,8 +24,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	
 	var handleSubjectChange = function(args) {
 	  // args is {roomJid, element, subject}
-    console.log("subject change: " + args.subject);
-    
     var subjectPieces = args.subject.split(" ");
     
     // now loop through the pieces looking for video.
@@ -33,22 +31,17 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     for(var i=0; i<subjectPieces.length; i++) {
       var piece = subjectPieces[i];
       
-      if(piece.toLowerCase().indexOf("video")!=-1) {
-        // if we find it, look at the next piece for the url.
-        var videoUrl = subjectPieces[i+1];
+      var videoId = extractYoutubeId(piece);
         
-        var videoId = extractYoutubeId(videoUrl);
-        
-        if(!videoId) {
-          continue;
-        } else {
-          foundVideo = true;
-          createOrUpdateEmbed(videoId);
-        }
+      if(!videoId) {
+        continue;
+      } else {
+        foundVideo = true;
+        createOrUpdateEmbed(videoId);
+        break;
       }
     }
     
-    console.log("found video? " + foundVideo);
     if(!foundVideo) {
       hideEmbed(true);
     } else {
@@ -63,7 +56,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     if (match&&match[2].length==11){
         return match[2];
     }else{
-      console.log("Bad youtube url: " + youtubeURL)
       return false;
     }
 	};
