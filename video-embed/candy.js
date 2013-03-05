@@ -90,6 +90,27 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     $(".video-embed .open").hide();
 	};
 	
+	var sizeEmbed = function(size) {
+	  // size should be 's', 'm', or 'l'
+	  var dimensions = {
+	    "small":{width:284, height:160},
+	    "medium":{width:400, height:225},
+	    "large":{width:533, height:300},
+	  };
+	  
+	  if(!size in dimensions) {
+	    // invalid size, not 's', 'm', or 'l'
+	    return;
+	  }
+	  
+	  $(".video-embed iframe").attr("width", dimensions[size].width);
+	  $(".video-embed iframe").attr("height", dimensions[size].height);
+	  $(".video-embed").css("width", dimensions[size].width);
+	  
+	  $(".video-embed .selected").removeClass("selected");
+	  $(".video-embed #" + size).addClass("selected");
+	};
+	
 	var createOrUpdateEmbed = function(videoId) {
 	  // check and see if the video embed exists already. if it does, 
 	  // update the embed src. if it doesn't, create it with the right src.
@@ -103,7 +124,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    // want to see it.
 	    // TODO see what happens when we turn rooms on
 	    
-      $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Room Video</h1><div class="close"><img src="candy-plugins/video-embed/img/bullet_arrow_up.png"></div><div class="open"><img src="candy-plugins/video-embed/img/bullet_arrow_down.png"></div><br class="clear"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
+      $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Room Video</h1><div class="close"><img src="candy-plugins/video-embed/img/bullet_arrow_up.png"></div><div class="open"><img src="candy-plugins/video-embed/img/bullet_arrow_down.png"></div><div class="size selected" id="large">L</div><div class="size" id="medium">M</div><div class="size" id="small">S</div><br class="clear"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
       
       $(".video-embed .close").click(function() {
         hideEmbed();
@@ -113,6 +134,17 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         showEmbed();
       });
       
+      $(".video-embed #small").click(function() {
+        sizeEmbed("small");
+      });
+      
+      $(".video-embed #medium").click(function() {
+        sizeEmbed("medium");
+      });
+      
+      $(".video-embed #large").click(function() {
+        sizeEmbed("large");
+      });
 	  }
 	  
 	};
