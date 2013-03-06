@@ -218,14 +218,18 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         if(msg.indexOf("/video")==0) {
           // look for a /video command
           
+          var player = self.players[args.roomJid];
+          
           var msgPieces = msg.split(" ");
           // handle the different available video commands.
           switch(msgPieces[1]) {
             case "start":
               console.log("start video");
+              player.playVideo();
               break;
             case "stop":
               console.log("stop video");
+              player.pauseVideo();
               break;
             case "sync":
               console.log("sync video");
@@ -234,7 +238,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               console.log("catchup video");
               break;
             case "id":
-              console.log("set video id");
+              console.log("set video id: " + msgPieces[2]);
+              player.loadVideoById(msgPieces[2]);
               break;
             default: 
               console.log("invalid video command: " + msg);
