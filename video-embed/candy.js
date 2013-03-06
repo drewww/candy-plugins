@@ -19,6 +19,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     // sign up for admin messages (which will start/stop video later)
     Candy.View.Event.Chat.onAdminMessage = handleAdminMessage;
     
+    Candy.View.Event.Message.beforeShow = handleVideoMessage;
     
     // include the youtube JS api per docs:
     // https://developers.google.com/youtube/iframe_api_reference
@@ -190,9 +191,70 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  
 	};
 	
+	var handleVideoMessage = function(args) {
+	  // args is {roomJid, nick, message}
+	  
+	  console.log(args.roomJid + ": " + args.message);
+	  
+	  // returning an empty string causes the message to get tossed out
+	  // this is perfect!
+    // return "";
+    
+    // extract the user object, given the nick we have
+    var user;
+    if(args.roomJid in Candy.Core.getRooms()) {
+	    user = Candy.Core.getRooms()[args.roomJid].roster.get(args.roomJid + "/" + args.nick);
+	  }
+	  
+	  if(user!==undefined) {
+	    // okay, given the user object exists, check and see if they're a 
+	    // moderator.
+      if(user.getRole()==user.ROLE_MODERATOR) {
+        console.log("message from moderator: " + args.message);
+        // if it's a moderator user, inspect the message to see if we need
+        // to respond.
+        var msg = args.message;
+        
+        if(msg.indexOf("/video")==0) {
+          // look for a /video command
+          
+          var msgPieces = msg.split(" ");
+          // handle the different available video commands.
+          switch(msgPieces[1]) {
+            case "start":
+              console.log("start video");
+              break;
+            case "stop":
+              console.log("stop video");
+              break;
+            case "sync":
+              console.log("sync video");
+              break;
+            case "catchup":
+              console.log("catchup video");
+              break;
+            case "id":
+              console.log("set video id");
+              break;
+            default: 
+              console.log("invalid video command: " + msg);
+          }
+          // if we find /video, ignore the message for sure
+          return "";
+        }
+      }
+	  }
+	  
+    return args.message
+	}
+	
 	var handleAdminMessage = function(args) {
 	  // args is {subject, message} (?)
-    
+    // I have no idea when this is triggered. I'd like to use it, but
+    // it doesn't seem to be chat messages from moderator role users. my
+    // hunch is that it's something to do with a special class of message
+    // from the server (like SERVER IS GOING DOWN or whatever) but I don't
+    // know how to trigger those with my XMPP client.
 	  console.log("admin message: " + args.message + " (" + args.subject + ")");
 	};
 	
