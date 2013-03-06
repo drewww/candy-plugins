@@ -36,6 +36,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     // we'll keep track of the player objects on a per
     // roomJid basis
     self.players = {};
+    self.playersReady = {};
     
     self.dimensions = {
 	    "small":{width:284, height:160},
@@ -43,6 +44,15 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    "large":{width:533, height:300},
 	  };
 	  
+    setInterval(function() {
+      // loop through all the players.
+      for(var i=0; i<Object.keys(self.players).length; i++) {
+        var key = Object.keys(self.players)[i];
+        var player = self.players[key];
+        
+        console.log(key + ": " + player.getCurrentTime());
+      }
+    }, 10000);
     
     return self;
 	};
@@ -148,14 +158,41 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         // reach.
       }
       
+      self.playersReady[roomJid] = false;
+      self.videoActions = [[],[],[],[],[],[],[]];
       // now use the youtube api to embed the video
       self.players[roomJid] = new YT.Player('player', {
         height: self.dimensions['large'].height,
         width: self.dimensions['large'].width,
         videoId: videoId,
+        startSeconds:0,
         events: {
-          "onReady": function(args) { console.log("onReady");},
-          "onStateChange": function(args) {console.log("onStateChange");},
+          "onReady": function(args) {
+            console.log(roomJid + " video ready");
+            self.playersReady[roomJid] = true;
+            },
+          "onStateChange": function(args) {
+            // this dance is important because certain commands depend on
+            // the player being in the right state. For instance,
+            // you can't just run a playVideo command immediately
+            // followed by seekTo; the seekTo is ignored because
+            // the video hasn't started yet. So we can queue up
+            // multiple commands in a row this way.
+            var state = args.data;
+            
+            if(state==-1) {
+              state=6;
+            }
+            
+            console.log("state changed: " + state);
+            console.log("actions to take: " + self.videoActions[state].length);
+            for(var i=0; i<self.videoActions[state].length; i++) {
+              var action = self.videoActions[state][i];
+              
+              action.call();
+            }
+            self.videoActions[state] = [];
+          },
         }
       });
       
@@ -187,9 +224,15 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         embedEl.draggable();
         embedEl.css("cursor", "move");
       }
+      
 	  }
 	  
 	};
+	
+	// TODO REMOVE THIS SHIM
+	self.handleVideoMessage = function(message) {
+	  handleVideoMessage({roomJid:"lobby@conference.jabber.multitudecorp.com", nick:"drew", message:message});
+	}
 	
 	var handleVideoMessage = function(args) {
 	  // args is {roomJid, nick, message}
@@ -211,6 +254,9 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    // moderator.
       if(user.getRole()==user.ROLE_MODERATOR) {
         console.log("message from moderator: " + args.message);
+        // TODO is there any way to check if this message is a past
+        // message that got sent on login versus a live message?
+        
         // if it's a moderator user, inspect the message to see if we need
         // to respond.
         var msg = args.message;
@@ -219,6 +265,13 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
           // look for a /video command
           
           var player = self.players[args.roomJid];
+          
+          if(!self.playersReady[args.roomJid]) {
+            console.log("received command for video player that isn't ready");
+            return;
+          }
+          
+          console.log("video state: " + player.getPlayerState());
           
           var msgPieces = msg.split(" ");
           // handle the different available video commands.
@@ -231,10 +284,55 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               console.log("stop video");
               player.pauseVideo();
               break;
-            case "sync":
-              console.log("sync video");
+            case "time":
+              // time sets all clients connected to this time, regardless
+              // of what they're doing now.
+            
+              var timeInSeconds = getSecondsFromTime(msgPieces[2]);
+              // validate that it's not beyond the end of the video
+              if(timeInSeconds > player.getDuration()) {
+                return "";
+              }
+              
+              // seek target in seconds
+              // if player is running already, seek.
+              // if it's stopped, start, wait until it has actually started
+              // and then seek.
+              if(player.getPlayerState()==1) {
+                player.seekTo(timeInSeconds);
+              } else {
+                player.playVideo();
+                queueVideoAction(function() {
+                  player.seekTo(timeInSeconds);
+                }, 1);
+              }
+              
               break;
             case "catchup":
+              // catchup is like time, but it's designed to onboard late
+              // entrants to an event. it won't mess with playback if
+              // the video is already playing, but it will bring people up
+              // to speed if they're stopped or far away from the target time
+              
+              var curPlayerState = player.getPlayerState();
+              
+              var targetTime = getSecondsFromTime(msgPieces[2]);
+              
+              if(curPlayerState==1) {
+                // if the player is in the playing state, see how far away it
+                // is from the target time.
+                if(Math.abs(player.getCurrentTime() - targetTime) > 15) {
+                    player.seekTo(targetTime);
+                }
+              } else {
+                // if the player is in any other state (which includes 
+                // stopped, paused, never-started) seek and start.
+                player.playVideo();
+                queueVideoAction(function() {
+                  player.seekTo(targetTime);
+                }, 1);
+              }
+              
               console.log("catchup video");
               break;
             case "id":
@@ -253,6 +351,19 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     return args.message
 	}
 	
+	var queueVideoAction = function(action, onState) {
+	  if(onState==-1) {
+	    onState = 6;
+	  }
+	  
+	  if(onState<0 || onState >6) {
+	    console.log("Bad call to queueVideoAction, invalid state: " + onState);
+	    return;
+	  }
+	  
+	  self.videoActions[onState].push(action);
+	}
+	
 	var handleAdminMessage = function(args) {
 	  // args is {subject, message} (?)
     // I have no idea when this is triggered. I'd like to use it, but
@@ -261,6 +372,33 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     // from the server (like SERVER IS GOING DOWN or whatever) but I don't
     // know how to trigger those with my XMPP client.
 	  console.log("admin message: " + args.message + " (" + args.subject + ")");
+	};
+	
+	var getSecondsFromTime = function(timeStr) {
+    var timePieces = timeStr.split(":");
+    
+    var seconds = 0;
+    
+    var counter = 0;
+    for(var i=timePieces.length-1; i>=0; i--) {
+      var field = parseInt(timePieces[i]);
+      switch(counter) {
+        case 0:
+          seconds += field;
+          break;
+        case 1:
+          seconds += 60*field;
+          break;
+        case 2:
+          seconds += 60*60*field;
+          break;
+      }
+      counter++;
+    }
+    
+    // we expect time to be a string of the form:
+    // m:ss
+    return seconds;
 	};
 	
 	return self;
