@@ -17,7 +17,31 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     Candy.View.Event.Room.onSubjectChange = handleSubjectChange;
     
     // sign up for admin messages (which will start/stop video later)
-    Candy.View.Event.Chat.onADminMessage = handleAdminMessage;
+    Candy.View.Event.Chat.onAdminMessage = handleAdminMessage;
+    
+    
+    // include the youtube JS api per docs:
+    // https://developers.google.com/youtube/iframe_api_reference
+    var tag = document.createElement('script');
+    tag.src = "//www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    self.youtubeApiAvailable = false;
+    window.onYouTubeIframeAPIReady = function(playerId) {
+      self.youtubeApiAvailable = true;
+    }
+    
+    // we'll keep track of the player objects on a per
+    // roomJid basis
+    self.players = {};
+    
+    self.dimensions = {
+	    "small":{width:284, height:160},
+	    "medium":{width:400, height:225},
+	    "large":{width:533, height:300},
+	  };
+	  
     
     return self;
 	};
@@ -37,7 +61,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         continue;
       } else {
         foundVideo = true;
-        createOrUpdateEmbed(videoId);
+        createOrUpdateEmbed(videoId, args.roomJid);
         break;
       }
     }
@@ -84,11 +108,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	
 	var sizeEmbed = function(size) {
 	  // size should be 's', 'm', or 'l'
-	  var dimensions = {
-	    "small":{width:284, height:160},
-	    "medium":{width:400, height:225},
-	    "large":{width:533, height:300},
-	  };
+	  var dimensions = self.dimensions;
 	  
 	  if(!size in dimensions) {
 	    // invalid size, not 's', 'm', or 'l'
@@ -103,7 +123,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  $(".video-embed #" + size).addClass("selected");
 	};
 	
-	var createOrUpdateEmbed = function(videoId) {
+	var createOrUpdateEmbed = function(videoId, roomJid) {
 	  // check and see if the video embed exists already. if it does, 
 	  // update the embed src. if it doesn't, create it with the right src.
 	  var embed;
@@ -116,7 +136,27 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    // want to see it.
 	    // TODO see what happens when we turn rooms on
 	    
-      $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Room Video</h1><div class="close"><img src="candy-plugins/video-embed/img/bullet_arrow_up.png"></div><div class="open"><img src="candy-plugins/video-embed/img/bullet_arrow_down.png"></div><div class="size selected" id="large">L</div><div class="size" id="medium">M</div><div class="size" id="small">S</div><br class="clear"><iframe width="533" height="300" src="http://www.youtube.com/embed/'+videoId+'?rel=0" frameborder="0" allowfullscreen></iframe></div>'));
+      $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Room Video</h1><div class="close"><img src="candy-plugins/video-embed/img/bullet_arrow_up.png"></div><div class="open"><img src="candy-plugins/video-embed/img/bullet_arrow_down.png"></div><div class="size selected" id="large">L</div><div class="size" id="medium">M</div><div class="size" id="small">S</div><div id="player"></div><br class="clear"></div>'));
+      
+      // check to see if youtube api is available?
+      if(!self.youtubeApiAvailable) {
+        console.log("YouTube API failed to load in time. Cannot embed videos.");
+        // TODO we should wait a little and try again. But really, this can
+        // only happen if the user manages to log in and start getting data
+        // before we manage to asynchronously load the YT lib. Bit of a 
+        // reach.
+      }
+      
+      // now use the youtube api to embed the video
+      self.players[roomJid] = new YT.Player('player', {
+        height: self.dimensions['large'].height,
+        width: self.dimensions['large'].width,
+        videoId: videoId,
+        events: {
+          "onReady": function(args) { console.log("onReady");},
+          "onStateChange": function(args) {console.log("onStateChange");},
+        }
+      });
       
       $(".video-embed .close").click(function() {
         hideEmbed();
