@@ -374,6 +374,10 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  console.log("admin message: " + args.message + " (" + args.subject + ")");
 	};
 	
+	// accepts times in the forms:
+	// h:mm:ss
+	// mm:ss
+	// ss
 	var getSecondsFromTime = function(timeStr) {
     var timePieces = timeStr.split(":");
     
@@ -396,8 +400,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
       counter++;
     }
     
-    // we expect time to be a string of the form:
-    // m:ss
     return seconds;
 	};
 	

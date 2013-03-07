@@ -35,8 +35,8 @@ Commands _must_ be sent from a moderator user. Commands from any other user role
  * `/video start` - Start clients playing at wherever their playheads are at the moment.
  * `/video stop` - Pause all clients' playback.
  * `/video id youtubeId` - Load a different video (note: this doesn't change the topic in the room, so late comers will have a different video loaded) 
- * `/video time mm:ss` - Forces all clients to move to the specified point in time. Auto-starts playback from that point.
- * `/video catchup mm:ss` - For clients that are synchronized (ie within a few seconds of the target time), this is ignored. For clients whose players are stopped, or are who at dramatically different points in time, this command will bring them to the right point in the video.
+ * `/video time mm:ss` - Forces all clients to move to the specified point in time. Auto-starts playback from that point. This is the preferred way to start clients playing at the start of a clip, too - for some reason, youtube videos frequently will default to starting somewhere in the middle if you call playVideo() on a stopped video. Not sure why this is. /view time 00:00 will reliably start at the beginning on all clients.
+ * `/video catchup mm:ss` - For clients that are synchronized (ie within a few seconds of the target time), this is ignored. For clients whose players are stopped, or are who at dramatically different points in time, this command will bring them to the right point in the video. To check the current video time, open the console - the video will periodically (every 10 seconds) output the current timestamp. This is obnoxious, I know, but it'll have to do for now.
 
 For times longer than an hour, continue to specify the time in minutes, eg 1:20:33 should be specified as 80:33.
 
