@@ -50,7 +50,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         var key = Object.keys(self.players)[i];
         var player = self.players[key];
         
-        console.log(key + ": " + player.getCurrentTime());
+        Candy.Core.log(key + ": " + player.getCurrentTime());
       }
     }, 10000);
     
@@ -151,7 +151,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
       
       // check to see if youtube api is available?
       if(!self.youtubeApiAvailable) {
-        console.log("YouTube API failed to load in time. Cannot embed videos.");
+        Candy.Core.log("[video-embed] YouTube API failed to load in time. Cannot embed videos.");
         // TODO we should wait a little and try again. But really, this can
         // only happen if the user manages to log in and start getting data
         // before we manage to asynchronously load the YT lib. Bit of a 
@@ -168,7 +168,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         startSeconds:0,
         events: {
           "onReady": function(args) {
-            console.log(roomJid + " video ready");
+            Candy.Core.log(roomJid + " video ready");
             self.playersReady[roomJid] = true;
             },
           "onStateChange": function(args) {
@@ -184,8 +184,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               state=6;
             }
             
-            console.log("state changed: " + state);
-            console.log("actions to take: " + self.videoActions[state].length);
+            Candy.Core.log("[video-embed] state changed: " + state);
+            Candy.Core.log("[video-embed] actions to take: " + self.videoActions[state].length);
             for(var i=0; i<self.videoActions[state].length; i++) {
               var action = self.videoActions[state][i];
               
@@ -236,10 +236,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	
 	var handleVideoMessage = function(args) {
 	  // args is {roomJid, nick, message}
-	  
-	  console.log(args.roomJid + ": " + args.message);
-	  
-	  // returning an empty string causes the message to get tossed out
+
+Cnad	  // returning an empty string causes the message to get tossed out
 	  // this is perfect!
     // return "";
     
@@ -253,7 +251,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    // okay, given the user object exists, check and see if they're a 
 	    // moderator.
       if(user.getRole()==user.ROLE_MODERATOR) {
-        console.log("message from moderator: " + args.message);
         // TODO is there any way to check if this message is a past
         // message that got sent on login versus a live message?
         
@@ -267,21 +264,21 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
           var player = self.players[args.roomJid];
           
           if(!self.playersReady[args.roomJid]) {
-            console.log("received command for video player that isn't ready");
+            Candy.Core.log("[video-embed] received command for video player that isn't ready");
             return;
           }
           
-          console.log("video state: " + player.getPlayerState());
+          Candy.Core.log("[video-embed] video state: " + player.getPlayerState());
           
           var msgPieces = msg.split(" ");
           // handle the different available video commands.
           switch(msgPieces[1]) {
             case "start":
-              console.log("start video");
+              Candy.Core.log("[video-embed] start video");
               player.playVideo();
               break;
             case "stop":
-              console.log("stop video");
+              Candy.Core.log("[video-embed] stop video");
               player.pauseVideo();
               break;
             case "time":
@@ -333,14 +330,14 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
                 }, 1);
               }
               
-              console.log("catchup video");
+              Candy.Core.log("[video-embed] catchup video");
               break;
             case "id":
-              console.log("set video id: " + msgPieces[2]);
+              Candy.Core.log("[video-embed] set video id: " + msgPieces[2]);
               player.loadVideoById(msgPieces[2]);
               break;
             default: 
-              console.log("invalid video command: " + msg);
+              Candy.Core.log("[video-embed] invalid video command: " + msg);
           }
           // if we find /video, ignore the message for sure
           return "";
@@ -357,7 +354,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  }
 	  
 	  if(onState<0 || onState >6) {
-	    console.log("Bad call to queueVideoAction, invalid state: " + onState);
+	    Candy.Core.log("[video-embed] Bad call to queueVideoAction, invalid state: " + onState);
 	    return;
 	  }
 	  
@@ -371,7 +368,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     // hunch is that it's something to do with a special class of message
     // from the server (like SERVER IS GOING DOWN or whatever) but I don't
     // know how to trigger those with my XMPP client.
-	  console.log("admin message: " + args.message + " (" + args.subject + ")");
+	  Candy.Core.log("[video-embed] admin message: " + args.message + " (" + args.subject + ")");
 	};
 	
 	// accepts times in the forms:
