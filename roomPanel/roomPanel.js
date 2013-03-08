@@ -126,10 +126,27 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
                     Candy.View.Pane.Chat.Modal.show(html,true);
 
                     $('.roomList a').bind('click', function(e) {
-                        var roomJid = this.href.split('#')[1];
-                        Candy.Core.Action.Jabber.Room.Join(roomJid);
+                        // first, leave the room we're in. this is a deviation
+                        // from the traditional model. we're forcing ppl to
+                        // be in one room at a time for the first experiment.
+                        var currentRoomJids = Object.keys(
+                          Candy.Core.getRooms());
+                        
+                        var newRoomJid = this.href.split('#')[1];
+                        Candy.Core.Action.Jabber.Room.Join(newRoomJid);
                         Candy.View.Pane.Chat.Modal.hide();
                         e.preventDefault();
+                        
+                        // we're expecting one room here, but loop it anyway.
+                        // we do this after we join because if we're ever in
+                        // no rooms, that can trigger the join dialog. so
+                        // we get the room list before we join, then drop
+                        // all the ones that were there before the new one.
+                        for(var i=0; i<currentRoomJids.length; i++) {
+                          Candy.Core.Action.Jabber.Room.Leave(
+                            currentRoomJids[i]);
+                        }
+                        
                     });
                     
                 } //if
