@@ -47,12 +47,18 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
         $('#roomPanel-button').click(function() {
             CandyShop.RoomPanel.showRoomPanel();
         });
+        
+        // since we're appending to chat-pane, which is shown at start
+        // behind the login screen, need to hide the button for now.
+        $("#roomPanel-button").hide();
 
         Candy.Core.Event.addObserver(Candy.Core.Event.KEYS.CHAT, {update: function(obj, data) {
             if (data.type == 'connection') {
                 if (Strophe.Status.CONNECTED == data.status) {
                     /* only show room window if not already in a room, timeout is to let some time for auto join to execute */
                     setTimeout(CandyShop.RoomPanel.showRoomPanelIfAllClosed, 500);
+                    // now show the button
+                    $("#roomPanel-button").show();
                 } //if
             } //if
             return true;
