@@ -237,7 +237,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	var handleVideoMessage = function(args) {
 	  // args is {roomJid, nick, message}
 
-Cnad	  // returning an empty string causes the message to get tossed out
+	  // returning an empty string causes the message to get tossed out
 	  // this is perfect!
     // return "";
     
