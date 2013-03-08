@@ -38,9 +38,13 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
             };
         } //if
 
-        var html = '<li id="roomPanel-control" data-tooltip="' + $.i18n._('candyshopRoomPanelListRoom') + '"></li>';
-        $('#chat-toolbar').prepend(html);
-        $('#roomPanel-control').click(function() {
+
+        // replace the button in the bottm right hand bar with
+        // a much more prominent button that goes into the top
+        // gutter where the room tabs actually go. 
+        var html = '<div id="roomPanel-button" data-tooltip="' + $.i18n._('candyshopRoomPanelListRoom') + '">change room</div>';
+        $("#chat-pane").prepend(html);
+        $('#roomPanel-button').click(function() {
             CandyShop.RoomPanel.showRoomPanel();
         });
 
