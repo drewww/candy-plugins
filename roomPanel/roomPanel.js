@@ -18,8 +18,11 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
         autoDetectRooms: true,
 
         // how long in seconds before refreshing room list, default value is 600. [optional]
-        roomCacheTime: 600
+        roomCacheTime: 600,
         
+        // whether joining a new room exists your existing room. ie,
+        // are users allowed to be in more than one room or not.
+        limitOneRoom: false
     };
     
     var _lastRoomUpdate = 0;
@@ -38,17 +41,27 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
             };
         } //if
 
-        var html = '<li id="roomPanel-control" data-tooltip="' + $.i18n._('candyshopRoomPanelListRoom') + '"></li>';
-        $('#chat-toolbar').prepend(html);
-        $('#roomPanel-control').click(function() {
+
+        // replace the button in the bottm right hand bar with
+        // a much more prominent button that goes into the top
+        // gutter where the room tabs actually go. 
+        var html = '<div id="roomPanel-button" data-tooltip="' + $.i18n._('candyshopRoomPanelListRoom') + '">change room</div>';
+        $("#chat-pane").prepend(html);
+        $('#roomPanel-button').click(function() {
             CandyShop.RoomPanel.showRoomPanel();
         });
+        
+        // since we're appending to chat-pane, which is shown at start
+        // behind the login screen, need to hide the button for now.
+        $("#roomPanel-button").hide();
 
         Candy.Core.Event.addObserver(Candy.Core.Event.KEYS.CHAT, {update: function(obj, data) {
             if (data.type == 'connection') {
                 if (Strophe.Status.CONNECTED == data.status) {
                     /* only show room window if not already in a room, timeout is to let some time for auto join to execute */
                     setTimeout(CandyShop.RoomPanel.showRoomPanelIfAllClosed, 500);
+                    // now show the button
+                    $("#roomPanel-button").show();
                 } //if
             } //if
             return true;
@@ -116,10 +129,29 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
                     Candy.View.Pane.Chat.Modal.show(html,true);
 
                     $('.roomList a').bind('click', function(e) {
-                        var roomJid = this.href.split('#')[1];
-                        Candy.Core.Action.Jabber.Room.Join(roomJid);
+                        // first, leave the room we're in. this is a deviation
+                        // from the traditional model. we're forcing ppl to
+                        // be in one room at a time for the first experiment.
+                        var currentRoomJids = Object.keys(
+                          Candy.Core.getRooms());
+                        
+                        var newRoomJid = this.href.split('#')[1];
+                        Candy.Core.Action.Jabber.Room.Join(newRoomJid);
                         Candy.View.Pane.Chat.Modal.hide();
                         e.preventDefault();
+                        
+                        
+                        if(_options.limitOneRoom) {
+                          // we're expecting one room here, but loop it.
+                          // we do this after we join because if we're ever in
+                          // no rooms, that can trigger the join dialog. so
+                          // we get the room list before we join, then drop
+                          // all the ones that were there before the new one.
+                          for(var i=0; i<currentRoomJids.length; i++) {
+                            Candy.Core.Action.Jabber.Room.Leave(
+                              currentRoomJids[i]);
+                          }
+                        }
                     });
                     
                 } //if

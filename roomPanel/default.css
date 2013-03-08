@@ -2,7 +2,19 @@
     color: #AAA;
 }
 
-#roomPanel-control {
-    width: 16px;
-    background: url(images/room.png);
+#roomPanel-button {
+  float: right;
+  margin-right: 200px;
+  background-color: #5BC4BE;
+  border-radius: 10px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px;
+  margin-top: 3px;
+}
+
+#roomPanel-button:hover {
+  cursor: pointer;
+  background-color: #3B8D86;
 }
