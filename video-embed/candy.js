@@ -140,6 +140,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    
       $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Room Video</h1><div class="close"><img src="candy-plugins/video-embed/img/bullet_arrow_up.png"></div><div class="open"><img src="candy-plugins/video-embed/img/bullet_arrow_down.png"></div><div class="size selected" id="large">L</div><div class="size" id="medium">M</div><div class="size" id="small">S</div><div id="player"></div><br class="clear"></div>'));
       
+      $(".video-embed .open").hide();
+      
       // check to see if youtube api is available?
       if(!self.youtubeApiAvailable) {
         Candy.Core.log("[video-embed] YouTube API failed to load in time. Cannot embed videos.");
