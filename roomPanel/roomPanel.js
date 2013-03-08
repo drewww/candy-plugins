@@ -18,8 +18,11 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
         autoDetectRooms: true,
 
         // how long in seconds before refreshing room list, default value is 600. [optional]
-        roomCacheTime: 600
+        roomCacheTime: 600,
         
+        // whether joining a new room exists your existing room. ie,
+        // are users allowed to be in more than one room or not.
+        limitOneRoom: false
     };
     
     var _lastRoomUpdate = 0;
@@ -137,16 +140,18 @@ CandyShop.RoomPanel = (function(self, Candy, Strophe, $) {
                         Candy.View.Pane.Chat.Modal.hide();
                         e.preventDefault();
                         
-                        // we're expecting one room here, but loop it anyway.
-                        // we do this after we join because if we're ever in
-                        // no rooms, that can trigger the join dialog. so
-                        // we get the room list before we join, then drop
-                        // all the ones that were there before the new one.
-                        for(var i=0; i<currentRoomJids.length; i++) {
-                          Candy.Core.Action.Jabber.Room.Leave(
-                            currentRoomJids[i]);
-                        }
                         
+                        if(_options.limitOneRoom) {
+                          // we're expecting one room here, but loop it.
+                          // we do this after we join because if we're ever in
+                          // no rooms, that can trigger the join dialog. so
+                          // we get the room list before we join, then drop
+                          // all the ones that were there before the new one.
+                          for(var i=0; i<currentRoomJids.length; i++) {
+                            Candy.Core.Action.Jabber.Room.Leave(
+                              currentRoomJids[i]);
+                          }
+                        }
                     });
                     
                 } //if
