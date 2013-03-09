@@ -15,6 +15,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	self.init = function() {
     // sign up for onSubjectChange notifications
     Candy.View.Event.Room.onSubjectChange = handleSubjectChange;
+    Candy.View.Event.Room.onAdd = handleRoomAdd;
     
     // sign up for admin messages (which will start/stop video later)
     Candy.View.Event.Chat.onAdminMessage = handleAdminMessage;
@@ -46,6 +47,17 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  
     return self;
 	};
+	
+	var handleRoomAdd = function(args) {
+	  // when a room is added, try just destroying all the player infrastructure
+	  // and starting over.
+	  if(self.player!==undefined) {
+      self.player = undefined;
+      self.playerReady = false;
+      Candy.Core.log("[video-embed] clear video on room change");
+      $(".video-embed").remove();
+	  }
+	}
 	
 	var handleSubjectChange = function(args) {
 	  // args is {roomJid, element, subject}
@@ -349,6 +361,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               break;
             default: 
               Candy.Core.log("[video-embed] invalid video command: " + msg);
+              break;
           }
           // if we find /video, ignore the message for sure
           return "";
