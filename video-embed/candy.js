@@ -35,8 +35,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     
     // we'll keep track of the player objects on a per
     // roomJid basis
-    self.players = {};
-    self.playersReady = {};
+    self.player;
+    self.playerReady = false;
     
     self.dimensions = {
 	    "small":{width:284, height:160},
@@ -50,6 +50,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	var handleSubjectChange = function(args) {
 	  // args is {roomJid, element, subject}
     var subjectPieces = args.subject.split(" ");
+    
+    Candy.Core.log("[video-embed] subject: " + args.subject);
     
     // now loop through the pieces looking for video.
     var foundVideo = false;
@@ -127,17 +129,17 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	var createOrUpdateEmbed = function(videoId, roomJid) {
 	  // check and see if the video embed exists already. if it does, 
 	  // update the embed src. if it doesn't, create it with the right src.
-	  var embed;
-	  if($(".video-embed").length>0) {
-	    var player = self.players[roomJid];
+ 	    if(self.player!==undefined) {
+	    var player = self.player;
       
       // TODO we might want to check that the player is loaded before doing
       // this. if it's not loaded, queue the loadVideo command on
       // the onReady event firing (see below event handler)
       
-      if(!self.playersReady[roomJid]) {
+      if(!self.playerReady) {
         self.onReadyActions.push(function() {
           player.loadVideoById(videoId);
+          player.pauseVideo();
         });
       } else {
         player.loadVideoById(videoId);
@@ -158,11 +160,11 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         // reach.
       }
       
-      self.playersReady[roomJid] = false;
+      self.playerReady = false;
       self.videoActions = [[],[],[],[],[],[],[]];
       self.onReadyActions = [];
       // now use the youtube api to embed the video
-      self.players[roomJid] = new YT.Player('player', {
+      self.player = new YT.Player('player', {
         height: self.dimensions['large'].height,
         width: self.dimensions['large'].width,
         videoId: videoId,
@@ -170,7 +172,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         events: {
           "onReady": function(args) {
             Candy.Core.log(roomJid + " video ready");
-            self.playersReady[roomJid] = true;
+            self.playerReady = true;
             
             for(var i=0; i<self.onReadyActions.length; i++) {
               var action = self.onReadyActions[i];
@@ -264,10 +266,14 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         if(msg.indexOf("/video")==0) {
           // look for a /video command
           
-          var player = self.players[args.roomJid];
+          var player = self.player;
           var msgPieces = msg.split(" ");
           
-          if(!self.playersReady[args.roomJid]) {
+          if(!self.playerReady) {
+            // this trap has the effect of also ignoring commands
+            // from the before-you-joined stanzas, because those
+            // are processed before the topic message which always arrives
+            // last.
             Candy.Core.log("[video-embed] received command for video player that isn't ready");
             return;
           }
@@ -286,7 +292,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               break;
             case "clear":
               player = null;
-              self.players[args.roomJid] = null;
+              self.player = null;
               Candy.Core.log("[video-embed] clear video");
               $(".video-embed").remove();
               break;
