@@ -222,11 +222,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  
 	};
 	
-	// TODO REMOVE THIS SHIM
-	self.handleVideoMessage = function(message) {
-	  handleVideoMessage({roomJid:"lobby@conference.jabber.multitudecorp.com", nick:"drew", message:message});
-	}
-	
 	var handleVideoMessage = function(args) {
 	  // args is {roomJid, nick, message}
 
@@ -257,17 +252,12 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
           var player = self.players[args.roomJid];
           var msgPieces = msg.split(" ");
           
-          // the only command we'll allow without the player being ready
-          // is "id" this causes some weird logic issue below but
-          // for now we'll just deal with it.
-          if(msgPieces[1]!="id" && !self.playersReady[args.roomJid]) {
+          if(!self.playersReady[args.roomJid]) {
             Candy.Core.log("[video-embed] received command for video player that isn't ready");
             return;
           }
           
-          if(player !== undefined) {
-            Candy.Core.log("[video-embed] video state: " + player.getPlayerState());
-          }
+          Candy.Core.log("[video-embed] video state: " + player.getPlayerState());
           
           // handle the different available video commands.
           switch(msgPieces[1]) {
@@ -335,32 +325,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               }
               
               Candy.Core.log("[video-embed] catchup video");
-              break;
-            case "id":
-              Candy.Core.log("[video-embed] set video id: " + msgPieces[2]);
-              
-              // check if id is plausible
-              if(msgPieces[2].length!=11) {
-                Candy.Core.log("[video-embed] invalid video id");
-                return;
-              }
-              
-              // two potential states here: if the player is loaded, just do
-              // loadVideoById. If it's not loaded, we need to do the full
-              // createEmbed process.
-              
-              if(player===undefined) {
-                createOrUpdateEmbed(msgPieces[2], args.roomJid);
-              } else {
-                // TODO to be careful, we might want to check that
-                // the player is ready and defer the load command
-                // if necessary. Practically, though, it's highly
-                // unlikely that the client will receive an id command
-                // in the few ms between creating the player object
-                // and before it's ready.
-                player.loadVideoById(msgPieces[2]);
-              }
-              
               break;
             default: 
               Candy.Core.log("[video-embed] invalid video command: " + msg);
