@@ -44,16 +44,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    "large":{width:533, height:300},
 	  };
 	  
-    setInterval(function() {
-      // loop through all the players.
-      for(var i=0; i<Object.keys(self.players).length; i++) {
-        var key = Object.keys(self.players)[i];
-        var player = self.players[key];
-        
-        Candy.Core.log(key + ": " + player.getCurrentTime());
-      }
-    }, 10000);
-    
     return self;
 	};
 	
@@ -139,15 +129,18 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  // update the embed src. if it doesn't, create it with the right src.
 	  var embed;
 	  if($(".video-embed").length>0) {
-	    embed = $(".video-embed");
-	    embed.find("iframe").attr("src", "http://www.youtube.com/embed/" + videoId + '?rel=0');
+	    var player = self.players[roomJid];
+      
+      // TODO we might want to check that the player is loaded before doing
+      // this. if it's not loaded, queue the loadVideo command on
+      // the onReady event firing (see below event handler)
+      player.loadVideoById(videoId);
 	  } else {
-	    
-	    // TODO make it easy to show/hide the embed for users that don't
-	    // want to see it.
 	    // TODO see what happens when we turn rooms on
 	    
       $("#chat-rooms").prepend($('<div class="video-embed"><h1>Current Room Video</h1><div class="close"><img src="candy-plugins/video-embed/img/bullet_arrow_up.png"></div><div class="open"><img src="candy-plugins/video-embed/img/bullet_arrow_down.png"></div><div class="size selected" id="large">L</div><div class="size" id="medium">M</div><div class="size" id="small">S</div><div id="player"></div><br class="clear"></div>'));
+      
+      $(".video-embed .open").hide();
       
       // check to see if youtube api is available?
       if(!self.youtubeApiAvailable) {
@@ -229,11 +222,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  
 	};
 	
-	// TODO REMOVE THIS SHIM
-	self.handleVideoMessage = function(message) {
-	  handleVideoMessage({roomJid:"lobby@conference.jabber.multitudecorp.com", nick:"drew", message:message});
-	}
-	
 	var handleVideoMessage = function(args) {
 	  // args is {roomJid, nick, message}
 
@@ -262,6 +250,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
           // look for a /video command
           
           var player = self.players[args.roomJid];
+          var msgPieces = msg.split(" ");
           
           if(!self.playersReady[args.roomJid]) {
             Candy.Core.log("[video-embed] received command for video player that isn't ready");
@@ -270,7 +259,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
           
           Candy.Core.log("[video-embed] video state: " + player.getPlayerState());
           
-          var msgPieces = msg.split(" ");
           // handle the different available video commands.
           switch(msgPieces[1]) {
             case "start":
@@ -280,6 +268,12 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
             case "stop":
               Candy.Core.log("[video-embed] stop video");
               player.pauseVideo();
+              break;
+            case "clear":
+              player = null;
+              self.players[args.roomJid] = null;
+              Candy.Core.log("[video-embed] clear video");
+              $(".video-embed").remove();
               break;
             case "time":
               // time sets all clients connected to this time, regardless
@@ -331,10 +325,6 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               }
               
               Candy.Core.log("[video-embed] catchup video");
-              break;
-            case "id":
-              Candy.Core.log("[video-embed] set video id: " + msgPieces[2]);
-              player.loadVideoById(msgPieces[2]);
               break;
             default: 
               Candy.Core.log("[video-embed] invalid video command: " + msg);
