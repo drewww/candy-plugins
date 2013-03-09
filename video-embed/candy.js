@@ -134,7 +134,14 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
       // TODO we might want to check that the player is loaded before doing
       // this. if it's not loaded, queue the loadVideo command on
       // the onReady event firing (see below event handler)
-      player.loadVideoById(videoId);
+      
+      if(!self.playersReady[roomJid]) {
+        self.onReadyActions.push(function() {
+          player.loadVideoById(videoId);
+        });
+      } else {
+        player.loadVideoById(videoId);
+      }
 	  } else {
 	    // TODO see what happens when we turn rooms on
 	    
@@ -153,6 +160,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
       
       self.playersReady[roomJid] = false;
       self.videoActions = [[],[],[],[],[],[],[]];
+      self.onReadyActions = [];
       // now use the youtube api to embed the video
       self.players[roomJid] = new YT.Player('player', {
         height: self.dimensions['large'].height,
@@ -163,6 +171,13 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
           "onReady": function(args) {
             Candy.Core.log(roomJid + " video ready");
             self.playersReady[roomJid] = true;
+            
+            for(var i=0; i<self.onReadyActions.length; i++) {
+              var action = self.onReadyActions[i];
+              
+              action.call();
+            }
+            self.onReadyActions = [];
             },
           "onStateChange": function(args) {
             // this dance is important because certain commands depend on
