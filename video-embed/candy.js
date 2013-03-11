@@ -351,9 +351,20 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               } else {
                 // if the player is in any other state (which includes 
                 // stopped, paused, never-started) seek and start.
+                
+                var startPaused = false;
+                if(msgPieces[3]=="stop") {
+                  // then we should start in a paused mode
+                  startPaused = true;
+                }
+                
                 player.playVideo();
                 queueVideoAction(function() {
                   player.seekTo(targetTime);
+                  
+                  if(startPaused) {
+                    player.pauseVideo();
+                  }
                 }, 1);
               }
               
