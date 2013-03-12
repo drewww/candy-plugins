@@ -51,6 +51,14 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	var handleRoomAdd = function(args) {
 	  // when a room is added, try just destroying all the player infrastructure
 	  // and starting over.
+	  
+	  // we don't want to clear the video for private messages, just for
+	  // actual room adds. 
+	  if(args.roomJid.indexOf("/")!=-1) {
+	    Candy.Core.log("[video-embed] ignored a room add that was a PM");
+	    return;
+	  }
+	  
 	  if(self.player!==undefined) {
       self.player = undefined;
       self.playerReady = false;
