@@ -190,6 +190,16 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
         width: self.dimensions['large'].width,
         videoId: videoId,
         startSeconds:0,
+        // leaving this here for later.
+        // turning this on means users can't scrub or change volume, but can
+        // still start/stop by clicking on the video. that's a sort of in-
+        // between state. Need to pair controls: 0 with a more elaborate
+        // UI redesign that exposes volume and blocks play-pause, or has some
+        // way of swapping in and out of controls:0 for users that want to
+        // desynchronize.
+        // playerVars: {
+        //             controls: '0'
+        //           },
         events: {
           "onReady": function(args) {
             Candy.Core.log(roomJid + " video ready");
@@ -334,10 +344,10 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
                 return "";
               }
               
-              var start = false;
+              var start = true;
               if(msgPieces.length==4 && msgPieces[3]=="stop") {
                 // then we should start in a paused mode
-                start = true;
+                start = false;
               }
               
               setPlayerTime(msgPieces[2], start);
