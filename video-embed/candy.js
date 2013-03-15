@@ -215,11 +215,9 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               state=6;
             }
             
-            Candy.Core.log("[video-embed] state changed: " + state);
-            Candy.Core.log("[video-embed] actions to take: " + self.videoActions[state].length);
             for(var i=0; i<self.videoActions[state].length; i++) {
               var action = self.videoActions[state][i];
-              
+              Candy.Core.log("[video-embed] handling action on state change to state " + state);
               action.call();
             }
             self.videoActions[state] = [];
