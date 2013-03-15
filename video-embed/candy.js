@@ -53,7 +53,8 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  // and starting over.
 	  
 	  // we don't want to clear the video for private messages, just for
-	  // actual room adds. 
+	  // actual room adds. private messages have /fromNick at the end of
+	  // their roomJid.
 	  if(args.roomJid.indexOf("/")!=-1) {
 	    Candy.Core.log("[video-embed] ignored a room add that was a PM");
 	    return;
@@ -272,6 +273,11 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	    user = Candy.Core.getRooms()[args.roomJid].roster.get(args.roomJid + "/" + args.nick);
 	  }
 	  
+    if(args.roomJid.indexOf("/")!=-1) {
+      Candy.Core.log("[video-embed] ignoring a private message");
+      return args.message;
+    }
+	  
 	  if(user!==undefined) {
 	    // okay, given the user object exists, check and see if they're a 
 	    // moderator.
@@ -325,16 +331,26 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               if(timeInSeconds > player.getDuration()) {
                 return "";
               }
+
+              var start = true;
+              if(msgsPieces.length==4 && msgPieces[3]=="stop") {
+                // then we should start in a paused mode
+                start = false;
+              }
               
               // seek target in seconds
               // if player is running already, seek.
               // if it's stopped, start, wait until it has actually started
               // and then seek.
               if(player.getPlayerState()==1) {
+                if(!start) {
+                  player.pauseVideo();
+                }
                 player.seekTo(timeInSeconds);
               } else {
                 player.playVideo();
                 queueVideoAction(function() {
+                  player.pauseVideo();
                   player.seekTo(timeInSeconds);
                 }, 1);
               }
@@ -349,30 +365,49 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               var curPlayerState = player.getPlayerState();
               
               var targetTime = getSecondsFromTime(msgPieces[2]);
+
+              var startPaused = false;
+              if(msgsPieces.length==4 && msgPieces[3]=="stop") {
+                // then we should start in a paused mode
+                startPaused = true;
+              }
+              
+              // we will obey the stop command regardless, becuse the
+              // user might have started out of a paused video. 
+              // we do this regardless of the rest of the command
+              // and logic.
+              if(startPaused) {
+                player.pauseVideo();
+              }
+              
+              if(Math.abs(player.getCurrentTime() - targetTime) < 5) {
+                Candy.Core.log("[video-embed] ignoring a catchup command but we're close enough");
+                return;
+              }
               
               if(curPlayerState==1) {
-                // if the player is in the playing state, see how far away it
-                // is from the target time.
-                if(Math.abs(player.getCurrentTime() - targetTime) > 15) {
-                    player.seekTo(targetTime);
-                }
+                // we know we're outside the time range if we get here, so
+                // just seek.
+                player.seekTo(targetTime);
               } else {
                 // if the player is in any other state (which includes 
                 // stopped, paused, never-started) seek and start.
                 
-                var startPaused = false;
-                if(msgPieces[3]=="stop") {
-                  // then we should start in a paused mode
-                  startPaused = true;
-                }
-                
                 player.playVideo();
                 queueVideoAction(function() {
-                  player.seekTo(targetTime);
-                  
+                  // we need to re-pause if we were not in a playable state
+                  // when we run this. This handles the situation when
+                  // the video hasn't loaded and we receive a "catchup stop" 
+                  // command; the initial pause is ignored because the
+                  // video isn't even playing.
                   if(startPaused) {
                     player.pauseVideo();
                   }
+                  
+                  
+                  // if video is paused when seekTo is called, 
+                  // seekTo won't auto-play.
+                  player.seekTo(targetTime);
                 }, 1);
               }
               
