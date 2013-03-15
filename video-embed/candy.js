@@ -397,14 +397,20 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
     if(player.getPlayerState()!=5 && player.getPlayerState()!=-1) {
       if(!start) {
         player.pauseVideo();
+      } else {
+        player.playVideo();
       }
+      
       player.seekTo(timeInSeconds);
     } else {
       player.playVideo();
       queueVideoAction(function() {
         if(!start) {
           player.pauseVideo();
-        } 
+        } else {
+          player.playVideo();
+        }
+        
         player.seekTo(timeInSeconds);
       }, 1);
     }
