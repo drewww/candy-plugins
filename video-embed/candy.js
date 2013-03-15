@@ -331,16 +331,26 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               if(timeInSeconds > player.getDuration()) {
                 return "";
               }
+
+              var start = true;
+              if(msgsPieces.length==4 && msgPieces[3]=="stop") {
+                // then we should start in a paused mode
+                start = false;
+              }
               
               // seek target in seconds
               // if player is running already, seek.
               // if it's stopped, start, wait until it has actually started
               // and then seek.
               if(player.getPlayerState()==1) {
+                if(!start) {
+                  player.pauseVideo();
+                }
                 player.seekTo(timeInSeconds);
               } else {
                 player.playVideo();
                 queueVideoAction(function() {
+                  player.pauseVideo();
                   player.seekTo(timeInSeconds);
                 }, 1);
               }
@@ -357,7 +367,7 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               var targetTime = getSecondsFromTime(msgPieces[2]);
 
               var startPaused = false;
-              if(msgPieces[3]=="stop") {
+              if(msgsPieces.length==4 && msgPieces[3]=="stop") {
                 // then we should start in a paused mode
                 startPaused = true;
               }
