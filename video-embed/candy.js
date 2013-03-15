@@ -327,33 +327,22 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               // of what they're doing now.
             
               var timeInSeconds = getSecondsFromTime(msgPieces[2]);
+
               // validate that it's not beyond the end of the video
-              if(timeInSeconds > player.getDuration()) {
+              // if the player hasn't loaded the video yet, getDuration()
+              // returns 0. In that case, we can't really do a valid check
+              // here, so accept anything.
+              if(player.getDuration()!=0 && timeInSeconds > player.getDuration()) {
                 return "";
               }
-
-              var start = true;
-              if(msgsPieces.length==4 && msgPieces[3]=="stop") {
+              
+              var start = false;
+              if(msgPieces.length==4 && msgPieces[3]=="stop") {
                 // then we should start in a paused mode
-                start = false;
+                start = true;
               }
               
-              // seek target in seconds
-              // if player is running already, seek.
-              // if it's stopped, start, wait until it has actually started
-              // and then seek.
-              if(player.getPlayerState()==1) {
-                if(!start) {
-                  player.pauseVideo();
-                }
-                player.seekTo(timeInSeconds);
-              } else {
-                player.playVideo();
-                queueVideoAction(function() {
-                  player.pauseVideo();
-                  player.seekTo(timeInSeconds);
-                }, 1);
-              }
+              setPlayerTime(msgPieces[2], start);
               
               break;
             case "catchup":
@@ -362,56 +351,28 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               // the video is already playing, but it will bring people up
               // to speed if they're stopped or far away from the target time
               
-              var curPlayerState = player.getPlayerState();
-              
-              var targetTime = getSecondsFromTime(msgPieces[2]);
-
-              var startPaused = false;
-              if(msgsPieces.length==4 && msgPieces[3]=="stop") {
+              var start = true;
+              if(msgPieces.length==4 && msgPieces[3]=="stop") {
                 // then we should start in a paused mode
-                startPaused = true;
+                start = false;
               }
               
-              // we will obey the stop command regardless, becuse the
-              // user might have started out of a paused video. 
-              // we do this regardless of the rest of the command
-              // and logic.
-              if(startPaused) {
-                player.pauseVideo();
+              var player = self.player;
+              var timeInSeconds = getSecondsFromTime(msgPieces[2]);
+          	  
+              // if the player is queued or unloaded, we can't check time and
+              // will call setPlayerTime for sure. If the player is loaded
+              // or started or paused, check and see if we should update.
+              if(player.getPlayerState()!=5 && player.getPlayerState()!=-1){
+                if(Math.abs(player.getCurrentTime() - timeInSeconds) < 5) {
+                  Candy.Core.log("[video-embed] ignoring a catchup command but we're close enough");
+                  return "";
+                }
               }
-              
-              if(Math.abs(player.getCurrentTime() - targetTime) < 5) {
-                Candy.Core.log("[video-embed] ignoring a catchup command but we're close enough");
-                return;
-              }
-              
-              if(curPlayerState==1) {
-                // we know we're outside the time range if we get here, so
-                // just seek.
-                player.seekTo(targetTime);
-              } else {
-                // if the player is in any other state (which includes 
-                // stopped, paused, never-started) seek and start.
-                
-                player.playVideo();
-                queueVideoAction(function() {
-                  // we need to re-pause if we were not in a playable state
-                  // when we run this. This handles the situation when
-                  // the video hasn't loaded and we receive a "catchup stop" 
-                  // command; the initial pause is ignored because the
-                  // video isn't even playing.
-                  if(startPaused) {
-                    player.pauseVideo();
-                  }
-                  
-                  
-                  // if video is paused when seekTo is called, 
-                  // seekTo won't auto-play.
-                  player.seekTo(targetTime);
-                }, 1);
-              }
-              
               Candy.Core.log("[video-embed] catchup video");
+              
+              setPlayerTime(msgPieces[2], start);
+              
               break;
             default: 
               Candy.Core.log("[video-embed] invalid video command: " + msg);
@@ -424,7 +385,34 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
 	  }
 	  
     return args.message
-	}
+	};
+	
+	var setPlayerTime = function(timeString, start) {
+	  var timeInSeconds = getSecondsFromTime(timeString);
+    var player = self.player;
+    var curPlayerState = player.getPlayerState();
+    
+    // seek target in seconds
+    // if player is running already, seek.
+    // if it's stopped, start, wait until it has actually started
+    // and then seek.
+    if(player.getPlayerState()!=5 && player.getPlayerState()!=-1) {
+      if(!start) {
+        player.pauseVideo();
+      }
+      player.seekTo(timeInSeconds);
+    } else {
+      player.playVideo();
+      queueVideoAction(function() {
+        if(!start) {
+          player.pauseVideo();
+        } 
+        player.seekTo(timeInSeconds);
+      }, 1);
+    }
+    
+    Candy.Core.log("[video-embed] setPlayerTime: " + timeInSeconds + " ("+(start?"started":"stopped")+")");
+	};
 	
 	var queueVideoAction = function(action, onState) {
 	  if(onState==-1) {
