@@ -382,6 +382,13 @@ CandyShop.VideoEmbed = (function(self, Candy, $) {
               setPlayerTime(msgPieces[2], start);
               
               break;
+            case "done":
+              // annoying, calling player.stopVideo() can put the player
+              // in whatever state it feels like other than 1. But it seems
+              // to do -1 reliably.
+              player.stopVideo();
+              Candy.Core.log("[video-embed] synchronized playback over");
+              break;
             default: 
               Candy.Core.log("[video-embed] invalid video command: " + msg);
               break;
